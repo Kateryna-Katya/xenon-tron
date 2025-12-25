@@ -1,20 +1,20 @@
 /**
- * XenonTron Project - Final Stable Script
- * Решена проблема с загрузкой секции Education
+ * XenonTron Project - Ultimate Stable Script
+ * Исправлено: Мобильное меню + Анимация секций + Синхронизация Lenis
  */
 
 window.addEventListener('load', () => {
-    // 1. Инициализация иконок
+    // 1. Инициализация иконок Lucide
     lucide.createIcons();
 
-    // 2. Инициализация Lenis
+    // 2. Инициализация Lenis (Smooth Scroll)
     const lenis = new Lenis({
         duration: 1.2,
         smoothWheel: true,
         wheelMultiplier: 1,
     });
 
-    // Связываем Lenis со ScrollTrigger
+    // Синхронизация со ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
 
     gsap.ticker.add((time) => {
@@ -22,11 +22,55 @@ window.addEventListener('load', () => {
     });
     gsap.ticker.lagSmoothing(0);
 
-    // 3. Регистрация плагина
+    // 3. Регистрация GSAP ScrollTrigger
     gsap.registerPlugin(ScrollTrigger);
 
-    // --- ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ АНИМАЦИЙ ---
-    const initAnimations = () => {
+    // --- 4. МОБИЛЬНОЕ МЕНЮ (ИСПРАВЛЕНО) ---
+    const burger = document.querySelector('.burger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+
+    if (burger && mobileMenu) {
+        const toggleMenu = () => {
+            const isActive = burger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            
+            if (isActive) {
+                // Останавливаем скролл Lenis и блокируем body
+                lenis.stop();
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Запускаем скролл обратно
+                lenis.start();
+                document.body.style.overflow = '';
+            }
+        };
+
+        burger.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleMenu();
+        });
+
+        // Закрытие при клике на ссылки
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (mobileMenu.classList.contains('active')) {
+                    toggleMenu();
+                }
+            });
+        });
+    }
+
+    // --- 5. ХЕДЕР (ЭФФЕКТ ПРИ СКРОЛЛЕ) ---
+    const header = document.querySelector('.header');
+    window.addEventListener('scroll', () => {
+        if (header) {
+            header.classList.toggle('header--scrolled', window.scrollY > 50);
+        }
+    });
+
+    // --- 6. ИНИЦИАЛИЗАЦИЯ АНИМАЦИЙ ---
+    const initAllAnimations = () => {
         
         // Hero
         gsap.from('.hero__content > *', {
@@ -37,24 +81,23 @@ window.addEventListener('load', () => {
             ease: "power4.out"
         });
 
-        // Исправленная секция Education
+        // Секция Education (Легко разобраться без опыта)
         const eduCards = document.querySelectorAll('.edu-card');
         eduCards.forEach((card) => {
-            // Устанавливаем начальное состояние через GSAP (важно!)
+            // Прячем через GSAP для предотвращения мигания
             gsap.set(card, { autoAlpha: 0, y: 50 });
 
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: card,
-                    start: "top 90%", // Срабатывает чуть раньше для надежности
+                    start: "top 85%", 
                     toggleActions: "play none none none",
-                    // invalidateOnRefresh пересчитывает точки при изменении высоты
                     invalidateOnRefresh: true, 
                 }
             });
 
             tl.to(card, {
-                autoAlpha: 1, // Плавно включает visibility и opacity
+                autoAlpha: 1, 
                 y: 0,
                 duration: 0.8,
                 ease: "power3.out"
@@ -68,12 +111,12 @@ window.addEventListener('load', () => {
             }, "-=0.4");
         });
 
-        // Блог и другие секции
+        // Блог
         document.querySelectorAll('.blog-item').forEach((item) => {
             gsap.from(item, {
                 scrollTrigger: {
                     trigger: item,
-                    start: "top 95%",
+                    start: "top 90%",
                 },
                 y: 30,
                 opacity: 0,
@@ -81,39 +124,31 @@ window.addEventListener('load', () => {
             });
         });
 
-        // Инновации
-        gsap.from(".innovations__viz", {
-            scrollTrigger: {
-                trigger: ".innovations",
-                start: "top 80%",
-            },
-            scale: 0.6,
-            opacity: 0,
-            duration: 1.2,
-            ease: "back.out(1.7)"
-        });
+        // Инновации (AI Core)
+        const viz = document.querySelector('.innovations__viz');
+        if (viz) {
+            gsap.from(viz, {
+                scrollTrigger: {
+                    trigger: ".innovations",
+                    start: "top 80%",
+                },
+                scale: 0.6,
+                opacity: 0,
+                duration: 1.2,
+                ease: "back.out(1.7)"
+            });
+        }
     };
 
-    // --- 4. ЗАПУСК И ГАРАНТИЯ ПЕРЕСЧЕТА ---
-    
-    // Запускаем анимации
-    initAnimations();
+    // Запуск
+    initAllAnimations();
 
-    // ПРИНУДИТЕЛЬНЫЙ ПЕРЕСЧЕТ (ТРИЖДЫ)
-    // 1. Сразу
+    // ГАРАНТИЯ ПЕРЕСЧЕТА КООРДИНАТ
     ScrollTrigger.refresh();
-    
-    // 2. Через 500мс (когда Lenis "утряс" высоту)
-    setTimeout(() => {
-        ScrollTrigger.refresh();
-    }, 500);
+    setTimeout(() => ScrollTrigger.refresh(), 500);
+    setTimeout(() => ScrollTrigger.refresh(), 1500);
 
-    // 3. Через 1.5 сек (на случай тяжелых картинок)
-    setTimeout(() => {
-        ScrollTrigger.refresh();
-    }, 1500);
-
-    // --- 5. ФОРМА ---
+    // --- 7. КОНТАКТНАЯ ФОРМА ---
     const contactForm = document.getElementById('ai-contact-form');
     if (contactForm) {
         const n1 = Math.floor(Math.random() * 8) + 1;
@@ -124,29 +159,36 @@ window.addEventListener('load', () => {
 
         contactForm.onsubmit = (e) => {
             e.preventDefault();
-            if (parseInt(document.getElementById('captcha-input').value) !== result) {
-                alert('Неверный ответ!'); return;
+            const captchaInput = document.getElementById('captcha-input');
+            if (parseInt(captchaInput.value) !== result) {
+                alert('Пожалуйста, решите пример правильно.'); 
+                return;
             }
             const btn = contactForm.querySelector('button');
-            btn.disabled = true; btn.textContent = 'Отправка...';
+            btn.disabled = true; 
+            btn.textContent = 'Отправка...';
+            
             setTimeout(() => {
                 const msg = document.getElementById('form-message');
                 msg.style.display = 'block';
                 msg.className = 'form__message success';
-                msg.textContent = 'Успешно! Мы скоро свяжемся с вами.';
+                msg.textContent = 'Запрос успешно отправлен!';
                 contactForm.reset();
                 btn.textContent = 'Готово';
             }, 1000);
         };
     }
 
-    // --- 6. COOKIES ---
-    const cookie = document.getElementById('cookie-popup');
-    if (cookie && !localStorage.getItem('xenon_cookies')) {
-        setTimeout(() => cookie.classList.add('active'), 3000);
-        document.getElementById('cookie-accept').onclick = () => {
-            localStorage.setItem('xenon_cookies', 'true');
-            cookie.classList.remove('active');
-        };
+    // --- 8. COOKIE POPUP ---
+    const cookiePopup = document.getElementById('cookie-popup');
+    const cookieAccept = document.getElementById('cookie-accept');
+    if (cookiePopup && !localStorage.getItem('xenon_cookies')) {
+        setTimeout(() => cookiePopup.classList.add('active'), 3000);
+        if (cookieAccept) {
+            cookieAccept.onclick = () => {
+                localStorage.setItem('xenon_cookies', 'true');
+                cookiePopup.classList.remove('active');
+            };
+        }
     }
 });
